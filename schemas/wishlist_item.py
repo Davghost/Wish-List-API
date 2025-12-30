@@ -12,11 +12,18 @@ class WishlistItemCreate(OrmBase):
    purchased: bool
    sort_order: Optional[int]
 
-class WishlistItemUpdate(BaseModel):
+class WishlistItemResponse(OrmBase):
    name: str
    description: Optional[str]
    link: Optional[str]
    purchased: bool
+   sort_order: Optional[int]
+
+class WishlistItemUpdate(BaseModel):
+   name: str
+   description: Optional[str]
+   link: Optional[str]
+   purchased: Optional[bool]
    sort_order: Optional[int]
 
 class WishListItems(BaseModel):

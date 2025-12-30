@@ -4,12 +4,12 @@ from model.wishlist_item import WishlistItem
 from flask.globals import request
 from sqlalchemy import select
 from spectree import Response
-from schemas.wishlist_item import DefaultResponse, WishlistItemCreate, OrmBase, WishlistItemUpdate, WishlistItems
+from schemas.wishlist_item import DefaultResponse, WishlistItemCreate, OrmBase, WishlistItemUpdate, WishListItems, WishlistItemResponse
 
 wishlist_controller = Blueprint("wishlist_controller", __name__, url_prefix="/wishlist")
 
 @wishlist_controller.get("/<int:item_id>")
-@api.validate(resp=Response(HTTP_200=WishlistItemCreate, HTTP_404=DefaultResponse), tags=["items"])
+@api.validate(resp=Response(HTTP_200=WishlistItemResponse, HTTP_404=DefaultResponse), tags=["items"])
 def get_item(item_id):
    """
    Get a specified item
@@ -19,7 +19,7 @@ def get_item(item_id):
    if item is None:
       return f"There is no item with id {item_id}", 404
 
-   response = WishlistItemCreate.model_validate(item).model_dump()
+   response = WishlistItemResponse.model_validate(item).model_dump()
    
    return response,200
 
@@ -31,7 +31,7 @@ def get_items():
    """
    items = db.session.scalars(select(WishlistItem)).all()
 
-   response = WishlistItems(
+   response = WishListItems(
       items=[WishlistItemCreate.model_validate(item).model_dump() for item in items]
    ).model_dump()
    return response, 200

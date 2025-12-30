@@ -24,7 +24,7 @@ def get_item(item_id):
    return response,200
 
 @wishlist_controller.get("/")
-@api.validate(resp=Response(HTTP_200=DefaultResponse), tags=["items"])
+@api.validate(resp=Response(HTTP_200=WishListItems), tags=["items"])
 def get_items():
    """
    Get all items

@@ -1,47 +1,47 @@
 from flask import Blueprint, jsonify
-from factory import db
+from factory import db, api
 from model.wishlist_item import WishlistItem
 from flask.globals import request
 from sqlalchemy import select
+from spectree import Response
+from schemas.wishlist_item import DefaultResponse, WishlistItemCreate, OrmBase, WishlistItemUpdate, WishlistItems
 
 wishlist_controller = Blueprint("wishlist_controller", __name__, url_prefix="/wishlist")
 
 @wishlist_controller.get("/<int:item_id>")
+@api.validate(resp=Response(HTTP_200=WishlistItemCreate, HTTP_404=DefaultResponse), tags=["items"])
 def get_item(item_id):
+   """
+   Get a specified item
+   """
    item = db.session.get(WishlistItem, item_id)
 
    if item is None:
       return f"There is no item with id {item_id}", 404
 
-   return {
-      "id": item.id,
-      "name": item.name,
-      "description": item.description if item.description else None,
-      "link": item.link if item.link else None,
-      "purchased": item.purchased,
-      "sort_order": item.sort_order,
-   }, 200
+   response = WishlistItemCreate.model_validate(item).model_dump()
+   
+   return response,200
 
 @wishlist_controller.get("/")
+@api.validate(resp=Response(HTTP_200=DefaultResponse), tags=["items"])
 def get_items():
+   """
+   Get all items
+   """
    items = db.session.scalars(select(WishlistItem)).all()
 
-   return jsonify(
-      [
-         {
-            "id": item.id,
-            "name": item.name,
-            "description": item.description if item.description else None,
-            "link": item.link if item.link else None,
-            "purchased": item.purchased,
-            "sort_order": item.sort_order,
-         }
-         for item in items
-      ]
-   ),200
+   response = WishlistItems(
+      items=[WishlistItemCreate.model_validate(item).model_dump() for item in items]
+   ).model_dump()
+   return response, 200
 
 @wishlist_controller.post("/")
+@api.validate(json=WishlistItemCreate, resp=Response(HTTP_201=DefaultResponse), tags=["items"])
 def post_item():
+   """
+   Create an item
+   """
    data = request.json
 
    if db.session.scalar(select(WishlistItem).filter_by(name=data["name"])):
@@ -52,16 +52,23 @@ def post_item():
       description=data["description"] if "description" in data else None,
       link=data["link"] if "link" in data else None,
       purchased=data["purchased"],
-      sort_order=data["sort_order"]
+      sort_order=data["sort_order"] if "sort_order" in data else None
    )
 
    db.session.add(item)
    db.session.commit()
 
-   return {"msg": "User created successfully."}, 201
+   return{
+      "id": item.id,
+      "msg": "Item created successfully."
+      }, 201
 
 @wishlist_controller.put("/<int:item_id>")
+@api.validate(json=WishlistItemUpdate ,resp=Response(HTTP_200=DefaultResponse, HTTP_404=DefaultResponse), tags=["items"])
 def put_item(item_id):
+   """
+   Updated an item
+   """
    item = db.session.get(WishlistItem, item_id)
 
    if item is None:
@@ -73,14 +80,18 @@ def put_item(item_id):
    item.description=data["description"] if "description" in data else None
    item.link=data["link"] if "link" in data else None
    item.purchased=data["purchased"]
-   item.sort_order=data["sort_order"]
+   item.sort_order=data["sort_order"] if "sort_order" in data else None
 
    db.session.commit()
 
    return {"msg": "Item was updated"}, 200
 
 @wishlist_controller.delete("/<int:item_id>")
+@api.validate(resp=Response(HTTP_200=DefaultResponse, HTTP_404=DefaultResponse), tags=["items"])
 def delete_item(item_id):
+   """
+   Delete an item
+   """
    item = db.session.get(WishlistItem, item_id)
 
    if item is None:

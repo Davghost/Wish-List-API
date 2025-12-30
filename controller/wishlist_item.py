@@ -32,7 +32,7 @@ def get_items():
    items = db.session.scalars(select(WishlistItem)).all()
 
    response = WishListItems(
-      items=[WishlistItemCreate.model_validate(item).model_dump() for item in items]
+      items=[WishlistItemResponse.model_validate(item).model_dump() for item in items]
    ).model_dump()
    return response, 200
 

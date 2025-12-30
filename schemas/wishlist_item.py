@@ -12,7 +12,7 @@ class WishlistItemCreate(OrmBase):
    sort_order: Optional[int]
 
 class WishlistItemResponse(OrmBase):
-   id: str
+   id: int
    name: str
    description: Optional[str]
    link: Optional[str]

@@ -5,11 +5,13 @@ from flask.globals import request
 from sqlalchemy import select
 from spectree import Response
 from schemas.wishlist_item import DefaultResponse, WishlistItemCreate, OrmBase, WishlistItemUpdate, WishListItems, WishlistItemResponse
+from flask_jwt_extended import jwt_required
 
 wishlist_controller = Blueprint("wishlist_controller", __name__, url_prefix="/wishlist")
 
 @wishlist_controller.get("/<int:item_id>")
 @api.validate(resp=Response(HTTP_200=WishlistItemResponse, HTTP_404=DefaultResponse), tags=["items"])
+@jwt_required()
 def get_item(item_id):
    """
    Get a specified item
@@ -25,6 +27,7 @@ def get_item(item_id):
 
 @wishlist_controller.get("/")
 @api.validate(resp=Response(HTTP_200=WishListItems), tags=["items"])
+@jwt_required()
 def get_items():
    """
    Get all items
@@ -38,6 +41,7 @@ def get_items():
 
 @wishlist_controller.post("/")
 @api.validate(json=WishlistItemCreate, resp=Response(HTTP_201=DefaultResponse), tags=["items"])
+@jwt_required()
 def post_item():
    """
    Create an item
@@ -65,6 +69,7 @@ def post_item():
 
 @wishlist_controller.put("/<int:item_id>")
 @api.validate(json=WishlistItemUpdate ,resp=Response(HTTP_200=DefaultResponse, HTTP_404=DefaultResponse), tags=["items"])
+@jwt_required()
 def put_item(item_id):
    """
    Updated an item
@@ -88,6 +93,7 @@ def put_item(item_id):
 
 @wishlist_controller.delete("/<int:item_id>")
 @api.validate(resp=Response(HTTP_200=DefaultResponse, HTTP_404=DefaultResponse), tags=["items"])
+@jwt_required()
 def delete_item(item_id):
    """
    Delete an item

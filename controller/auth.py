@@ -8,10 +8,11 @@ from schemas.auth import LoginMessage, LoginResponseMessage, DefaultResponseAuth
 from schemas.wishlist_item import DefaultResponse
 from datetime import datetime
 from flask_jwt_extended import jwt_required
+from werkzeug.security import generate_password_hash
 
 auth_user = Blueprint('auth_user', __name__, url_prefix='/users')
 
-@auth_user.route("/login")
+@auth_user.post("/login")
 @api.validate(json=LoginMessage, resp=Response(HTTP_200=LoginResponseMessage, HTTP_401=DefaultResponseAuth),security={}, tags=["auth"])
 def login():
    """
@@ -20,17 +21,17 @@ def login():
    data = request.json
 
    user = db.session.scalars(select(User).filter_by(name=data["name"])).first()
-   if user and user.verify_password(data["password_hash"]):
+   if user and user.verify_password(data["password"]):
       return {
-         "acess_token": create_access_token(
+         "access_token": create_access_token(
             identity=user.name, expires_delta=None
          )
       },200
    
    return {"msg": "Username and password do not match"}, 401
 
-@auth_user.route("/create")
-@api.validate(json=CreateUser, resp=Response(HTTP_201=DefaultResponse), security={}, tags=["auth"])
+@auth_user.post("/")
+@api.validate(json=CreateUser, resp=Response(HTTP_201=DefaultResponseAuth), security={}, tags=["auth"])
 def create_user():
    """
    Create an user
@@ -45,9 +46,9 @@ def create_user():
          data["birthdate"] = data["birthdate"][:-1]
 
    user = User(
-   username=data["username"],
+   name=data["name"],
    email=data["email"],
-   password=data["password"],
+   password_hash=generate_password_hash(data["password"]),
    birthdate=(
       datetime.fromisoformat(data["birthdate"]) if "birthdate" in data else None
    ))
@@ -57,7 +58,7 @@ def create_user():
 
    return {"msg": "User created successfully."}, 201
 
-@auth_user.route("/logout")
+@auth_user.post("/logout")
 @api.validate(resp=Response(HTTP_200=DefaultResponseAuth), tags=["auth"])
 @jwt_required()
 def logout():
